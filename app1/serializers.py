@@ -20,3 +20,16 @@ class AccUsersSerializer(serializers.ModelSerializer):
         if 'pass' in data:
             data['pass_field'] = data.pop('pass')
         return super().to_internal_value(data)
+    
+
+
+
+
+
+from rest_framework import serializers
+from .models import Misel
+
+class MiselSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Misel
+        fields = ['firm_name', 'address', 'phones', 'mobile', 'address1', 'address2', 'address3', 'pagers', 'tinno']
