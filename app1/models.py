@@ -5,16 +5,13 @@ class AccUsers(models.Model):
     pass_field = models.CharField(max_length=100, db_column='pass')
     role = models.CharField(max_length=30, blank=True, null=True)
     accountcode = models.CharField(max_length=30, blank=True, null=True)
+    client_id = models.CharField(max_length=100)  # <-- ADD THIS
 
     class Meta:
         db_table = 'acc_users'
-        managed = True  # ✅ Let Django create this table via migration
+        managed = True
+        unique_together = ('id', 'client_id')
 
-
-
-
-
-from django.db import models
 
 class Misel(models.Model):
     firm_name = models.CharField(max_length=150, blank=True, null=True)
@@ -26,7 +23,8 @@ class Misel(models.Model):
     address3 = models.CharField(max_length=50, blank=True, null=True)
     pagers = models.CharField(max_length=60, blank=True, null=True)
     tinno = models.CharField(max_length=30, blank=True, null=True)
+    client_id = models.CharField(max_length=100)  # <-- ADD THIS
 
     class Meta:
         db_table = 'misel'
-        managed = True  # ✅ Let Django create this table via migration
+        managed = True
