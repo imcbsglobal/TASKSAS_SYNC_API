@@ -28,3 +28,7 @@ class Misel(models.Model):
     class Meta:
         db_table = 'misel'
         managed = True
+
+
+
+# sdbj
