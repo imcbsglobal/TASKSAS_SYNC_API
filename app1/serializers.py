@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import AccUsers
 from .models import Misel
+from .models import AccLedgers,AccMaster,AccUsers
 
 # AccUsersSerializer
 class AccUsersSerializer(serializers.ModelSerializer):
@@ -27,3 +28,31 @@ class MiselSerializer(serializers.ModelSerializer):
         fields = ['firm_name', 'address', 'phones', 'mobile',
                   'address1', 'address2', 'address3', 'pagers',
                   'tinno', 'client_id']  # added client_id
+        
+
+
+
+
+
+# AccMasterSerializer
+class AccMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccMaster
+        fields = ['code', 'name', 'opening_balance', 'debit', 'credit',
+                  'place', 'phone2', 'openingdepartment', 'client_id']
+
+
+# AccLedgersSerializer
+class AccLedgersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccLedgers
+        fields = ['code', 'particulars', 'debit', 'credit', 'entry_mode',
+                  'entry_date', 'voucher_no', 'narration', 'client_id']
+
+
+# AccInvmastSerializer
+class AccInvmastSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccInvmast
+        fields = ['modeofpayment', 'customerid', 'invdate', 'nettotal',
+                  'paid', 'bill_ref', 'client_id']

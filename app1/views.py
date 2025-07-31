@@ -1,8 +1,8 @@
 # from rest_framework.views import APIView
 # from rest_framework.response import Response
 # from rest_framework import status
-# from .models import AccUsers
-# import traceback
+# from .models import AccUsers, Misel
+
 
 # class UploadAccUsersAPI(APIView):
 #     def post(self, request):
@@ -16,10 +16,11 @@
 #             return Response({"error": "Expected a list of user items."}, status=400)
 
 #         try:
-#             # Delete only the data for the given client_id
+#             # 🔁 Delete all acc_users entries for this client_id
 #             AccUsers.objects.filter(client_id=client_id).delete()
 
-#             for idx, item in enumerate(data):
+#             # ✅ Insert new data
+#             for item in data:
 #                 AccUsers.objects.create(
 #                     id=item['id'],
 #                     pass_field=item['pass'],
@@ -28,7 +29,7 @@
 #                     client_id=client_id
 #                 )
 
-#             return Response({"message": f"{len(data)} users uploaded for client_id {client_id}."}, status=201)
+#             return Response({"message": f"{len(data)} users uploaded (old data cleared) for client_id {client_id}."}, status=201)
 
 #         except Exception as e:
 #             return Response({"error": str(e)}, status=500)
@@ -37,6 +38,7 @@
 # class GetAccUsersAPI(APIView):
 #     def get(self, request):
 #         client_id = request.query_params.get('client_id')
+
 #         if not client_id:
 #             return Response({"error": "Missing client_id in query parameters."}, status=400)
 
@@ -50,20 +52,6 @@
 
 #         return Response({"count": len(data), "users": data}, status=200)
 
-        
-
-
-
-
-
-
-
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework import status
-# from .models import Misel
-# from .serializers import MiselSerializer
-# import traceback
 
 # class UploadMiselAPI(APIView):
 #     def post(self, request):
@@ -77,9 +65,11 @@
 #             return Response({"error": "Expected a list of misel items."}, status=400)
 
 #         try:
+#             # 🔁 Delete all misel entries for this client_id
 #             Misel.objects.filter(client_id=client_id).delete()
 
-#             for idx, item in enumerate(data):
+#             # ✅ Insert new misel data
+#             for item in data:
 #                 Misel.objects.create(
 #                     firm_name=item.get('firm_name'),
 #                     address=item.get('address'),
@@ -102,6 +92,7 @@
 # class GetMiselAPI(APIView):
 #     def get(self, request):
 #         client_id = request.query_params.get('client_id')
+
 #         if not client_id:
 #             return Response({"error": "Missing client_id in query parameters."}, status=400)
 
@@ -122,10 +113,12 @@
 
 
 
+
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccUsers, Misel
+from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast
 
 
 class UploadAccUsersAPI(APIView):
@@ -140,10 +133,8 @@ class UploadAccUsersAPI(APIView):
             return Response({"error": "Expected a list of user items."}, status=400)
 
         try:
-            # 🔁 Delete all acc_users entries for this client_id
             AccUsers.objects.filter(client_id=client_id).delete()
 
-            # ✅ Insert new data
             for item in data:
                 AccUsers.objects.create(
                     id=item['id'],
@@ -153,7 +144,7 @@ class UploadAccUsersAPI(APIView):
                     client_id=client_id
                 )
 
-            return Response({"message": f"{len(data)} users uploaded (old data cleared) for client_id {client_id}."}, status=201)
+            return Response({"message": f"{len(data)} users uploaded for client_id {client_id}."}, status=201)
 
         except Exception as e:
             return Response({"error": str(e)}, status=500)
@@ -189,10 +180,8 @@ class UploadMiselAPI(APIView):
             return Response({"error": "Expected a list of misel items."}, status=400)
 
         try:
-            # 🔁 Delete all misel entries for this client_id
             Misel.objects.filter(client_id=client_id).delete()
 
-            # ✅ Insert new misel data
             for item in data:
                 Misel.objects.create(
                     firm_name=item.get('firm_name'),
@@ -234,3 +223,181 @@ class GetMiselAPI(APIView):
         } for m in misel]
 
         return Response({"count": len(data), "misel": data}, status=200)
+
+
+class UploadAccMasterAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of acc_master items."}, status=400)
+
+        try:
+            # Only delete existing data if not appending
+            if not append:
+                AccMaster.objects.filter(client_id=client_id).delete()
+
+            for item in data:
+                AccMaster.objects.create(
+                    code=item['code'],
+                    name=item.get('name'),
+                    opening_balance=item.get('opening_balance'),
+                    debit=item.get('debit'),
+                    credit=item.get('credit'),
+                    place=item.get('place'),
+                    phone2=item.get('phone2'),
+                    openingdepartment=item.get('openingdepartment'),
+                    client_id=client_id
+                )
+
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({"message": f"{len(data)} acc_master records {action} for client_id {client_id}."}, status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccMasterAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        acc_master = AccMaster.objects.filter(client_id=client_id)
+        data = [{
+            "code": m.code,
+            "name": m.name,
+            "opening_balance": str(m.opening_balance) if m.opening_balance else None,
+            "debit": str(m.debit) if m.debit else None,
+            "credit": str(m.credit) if m.credit else None,
+            "place": m.place,
+            "phone2": m.phone2,
+            "openingdepartment": m.openingdepartment
+        } for m in acc_master]
+
+        return Response({"count": len(data), "acc_master": data}, status=200)
+
+
+class UploadAccLedgersAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of acc_ledgers items."}, status=400)
+
+        try:
+            # Only delete existing data if not appending
+            if not append:
+                AccLedgers.objects.filter(client_id=client_id).delete()
+
+            for item in data:
+                AccLedgers.objects.create(
+                    code=item['code'],
+                    particulars=item.get('particulars'),
+                    debit=item.get('debit'),
+                    credit=item.get('credit'),
+                    entry_mode=item.get('entry_mode'),
+                    entry_date=item.get('entry_date'),
+                    voucher_no=item.get('voucher_no'),
+                    narration=item.get('narration'),
+                    client_id=client_id
+                )
+
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({"message": f"{len(data)} acc_ledgers records {action} for client_id {client_id}."}, status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccLedgersAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        acc_ledgers = AccLedgers.objects.filter(client_id=client_id)
+        data = [{
+            "code": l.code,
+            "particulars": l.particulars,
+            "debit": str(l.debit) if l.debit else None,
+            "credit": str(l.credit) if l.credit else None,
+            "entry_mode": l.entry_mode,
+            "entry_date": l.entry_date.strftime('%Y-%m-%d') if l.entry_date else None,
+            "voucher_no": l.voucher_no,
+            "narration": l.narration
+        } for l in acc_ledgers]
+
+        return Response({"count": len(data), "acc_ledgers": data}, status=200)
+
+
+class UploadAccInvmastAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of acc_invmast items."}, status=400)
+
+        try:
+            AccInvmast.objects.filter(client_id=client_id).delete()
+
+            for item in data:
+                AccInvmast.objects.create(
+                    modeofpayment=item.get('modeofpayment'),
+                    customerid=item.get('customerid'),
+                    invdate=item.get('invdate'),
+                    nettotal=item.get('nettotal'),
+                    paid=item.get('paid'),
+                    bill_ref=item.get('bill_ref'),
+                    client_id=client_id
+                )
+
+            return Response({"message": f"{len(data)} acc_invmast records uploaded for client_id {client_id}."}, status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccInvmastAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        acc_invmast = AccInvmast.objects.filter(client_id=client_id)
+        data = [{
+            "modeofpayment": i.modeofpayment,
+            "customerid": i.customerid,
+            "invdate": i.invdate.strftime('%Y-%m-%d') if i.invdate else None,
+            "nettotal": str(i.nettotal) if i.nettotal else None,
+            "paid": str(i.paid) if i.paid else None,
+            "bill_ref": i.bill_ref
+        } for i in acc_invmast]
+
+        return Response({"count": len(data), "acc_invmast": data}, status=200)
+    
+
+
+
+# GET http://127.0.0.1:8000/api/get-users/?client_id=CLIENT001
+# GET http://127.0.0.1:8000/api/get-misel/?client_id=CLIENT001
+# GET http://127.0.0.1:8000/api/get-acc-master/?client_id=CLIENT001
+# GET http://127.0.0.1:8000/api/get-acc-ledgers/?client_id=CLIENT001
+# GET http://127.0.0.1:8000/api/get-acc-invmast/?client_id=CLIENT001
