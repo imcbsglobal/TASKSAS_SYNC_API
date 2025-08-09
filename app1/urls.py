@@ -5,7 +5,8 @@ from .views import (
     UploadMiselAPI, GetMiselAPI,
     UploadAccMasterAPI, GetAccMasterAPI,
     UploadAccLedgersAPI, GetAccLedgersAPI,
-    UploadAccInvmastAPI, GetAccInvmastAPI
+    UploadAccInvmastAPI, GetAccInvmastAPI,
+    UploadCashAndBankAccMasterAPI,GetCashAndBankAccMasterAPI
 )
 
 urlpatterns = [
@@ -24,4 +25,7 @@ urlpatterns = [
     path('get-acc-ledgers/', GetAccLedgersAPI.as_view(), name='get_acc_ledgers'),
     path('upload-acc-invmast/', UploadAccInvmastAPI.as_view(), name='upload_acc_invmast'),
     path('get-acc-invmast/', GetAccInvmastAPI.as_view(), name='get_acc_invmast'),
+
+    path('upload-cashandbankaccmaster/', UploadCashAndBankAccMasterAPI.as_view(), name='upload_cashandbankaccmaster'),
+    path('get-cashandbankaccmaster/', GetCashAndBankAccMasterAPI.as_view(), name='get_cashandbankaccmaster'),
 ]

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import AccUsers
 from .models import Misel
-from .models import AccLedgers,AccMaster,AccUsers
+from .models import AccLedgers,AccMaster,AccUsers,AccInvmast,CashAndBankAccMaster
 
 # AccUsersSerializer
 class AccUsersSerializer(serializers.ModelSerializer):
@@ -56,3 +56,11 @@ class AccInvmastSerializer(serializers.ModelSerializer):
         model = AccInvmast
         fields = ['modeofpayment', 'customerid', 'invdate', 'nettotal',
                   'paid', 'bill_ref', 'client_id']
+        
+
+
+
+class CashAndBankAccMasterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CashAndBankAccMaster
+        fields = ['code', 'name', 'super_code', 'opening_balance', 'opening_date', 'debit', 'credit', 'client_id']

@@ -32,7 +32,8 @@ class Misel(models.Model):
 
 
 class AccMaster(models.Model):
-    code = models.CharField(max_length=30, primary_key=True)
+    id = models.AutoField(primary_key=True)  # Add auto-incrementing primary key
+    code = models.CharField(max_length=30)   # Remove primary_key=True from code
     name = models.CharField(max_length=200, blank=True, null=True)
     opening_balance = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     debit = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
@@ -45,7 +46,7 @@ class AccMaster(models.Model):
     class Meta:
         db_table = 'acc_master'
         managed = True
-        unique_together = ('code', 'client_id')
+        unique_together = ('code', 'client_id')  # This ensures code is unique per client
 
 
 class AccLedgers(models.Model):
@@ -78,3 +79,22 @@ class AccInvmast(models.Model):
     class Meta:
         db_table = 'acc_invmast'
         managed = True
+
+
+
+
+class CashAndBankAccMaster(models.Model):
+    id = models.AutoField(primary_key=True)  # Add explicit primary key
+    code = models.CharField(max_length=30)
+    name = models.CharField(max_length=250)
+    super_code = models.CharField(max_length=5, blank=True, null=True)
+    opening_balance = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    opening_date = models.DateField(blank=True, null=True)
+    debit = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    credit = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'cashandbankaccmaster'
+        managed = True
+        unique_together = ('code', 'client_id')  # Keep unique constraint on business logic
