@@ -39,7 +39,8 @@ class AccMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccMaster
         fields = ['code', 'name', 'opening_balance', 'debit', 'credit',
-                  'place', 'phone2', 'openingdepartment', 'client_id']
+                  'place', 'phone2', 'openingdepartment', 'area', 'client_id']
+
 
 
 # AccLedgersSerializer

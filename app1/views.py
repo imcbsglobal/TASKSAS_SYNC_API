@@ -107,7 +107,6 @@ class GetMiselAPI(APIView):
 
         return Response({"count": len(data), "misel": data}, status=200)
 
-
 class UploadAccMasterAPI(APIView):
     def post(self, request):
         data = request.data
@@ -126,16 +125,20 @@ class UploadAccMasterAPI(APIView):
                 AccMaster.objects.filter(client_id=client_id).delete()
 
             for item in data:
-                AccMaster.objects.create(
+                # Use get_or_create or update_or_create to handle duplicates
+                acc_master, created = AccMaster.objects.update_or_create(
                     code=item['code'],
-                    name=item.get('name'),
-                    opening_balance=item.get('opening_balance'),
-                    debit=item.get('debit'),
-                    credit=item.get('credit'),
-                    place=item.get('place'),
-                    phone2=item.get('phone2'),
-                    openingdepartment=item.get('openingdepartment'),
-                    client_id=client_id
+                    client_id=client_id,
+                    defaults={
+                        'name': item.get('name'),
+                        'opening_balance': item.get('opening_balance'),
+                        'debit': item.get('debit'),
+                        'credit': item.get('credit'),
+                        'place': item.get('place'),
+                        'phone2': item.get('phone2'),
+                        'openingdepartment': item.get('openingdepartment'),
+                        'area': item.get('area') if item.get('area') else None,
+                    }
                 )
 
             action = "appended" if append else "uploaded (old data cleared)"
@@ -156,15 +159,17 @@ class GetAccMasterAPI(APIView):
         data = [{
             "code": m.code,
             "name": m.name,
-            "opening_balance": str(m.opening_balance) if m.opening_balance else None,
-            "debit": str(m.debit) if m.debit else None,
-            "credit": str(m.credit) if m.credit else None,
+            "opening_balance": str(m.opening_balance) if m.opening_balance is not None else None,
+            "debit": str(m.debit) if m.debit is not None else None,
+            "credit": str(m.credit) if m.credit is not None else None,
             "place": m.place,
             "phone2": m.phone2,
-            "openingdepartment": m.openingdepartment
+            "openingdepartment": m.openingdepartment,
+            "area": m.area if m.area else ""  # ensure area always included
         } for m in acc_master]
 
         return Response({"count": len(data), "acc_master": data}, status=200)
+
 
 
 class UploadAccLedgersAPI(APIView):
