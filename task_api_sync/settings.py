@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ato$2hslml$h_mn!-o6v1d7u*e33(qb24trmfmhsoc!8pl@rtp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["taskwebsyncapi.imcbs.com","www.taskwebsyncapi.imcbs.com"]
 
 
 # Application definition
