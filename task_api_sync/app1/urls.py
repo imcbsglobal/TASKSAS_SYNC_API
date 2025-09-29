@@ -31,3 +31,4 @@ urlpatterns = [
     path('upload-accttservicemaster/', UploadAccTtServicemasterAPI.as_view(), name='upload_accttservicemaster'),
     path('get-accttservicemaster/',    GetAccTtServicemasterAPI.as_view(),    name='get_accttservicemaster'),
 ]
+# xh
