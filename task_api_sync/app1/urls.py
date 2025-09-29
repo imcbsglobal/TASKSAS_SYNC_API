@@ -1,12 +1,13 @@
 from django.urls import path
-from .views import UploadAccUsersAPI, GetAccUsersAPI,UploadMiselAPI,GetMiselAPI
 from .views import (
     UploadAccUsersAPI, GetAccUsersAPI,
     UploadMiselAPI, GetMiselAPI,
     UploadAccMasterAPI, GetAccMasterAPI,
     UploadAccLedgersAPI, GetAccLedgersAPI,
     UploadAccInvmastAPI, GetAccInvmastAPI,
-    UploadCashAndBankAccMasterAPI,GetCashAndBankAccMasterAPI
+    UploadCashAndBankAccMasterAPI, GetCashAndBankAccMasterAPI,
+    # NEW imports
+    UploadAccTtServicemasterAPI, GetAccTtServicemasterAPI
 )
 
 urlpatterns = [
@@ -14,10 +15,6 @@ urlpatterns = [
     path('get-users/', GetAccUsersAPI.as_view(), name='get_users'),
     path('upload-misel/', UploadMiselAPI.as_view(), name='upload_misel'),
     path('get-misel/', GetMiselAPI.as_view(), name='get_misel'),
-
-
-
-
 
     path('upload-acc-master/', UploadAccMasterAPI.as_view(), name='upload_acc_master'),
     path('get-acc-master/', GetAccMasterAPI.as_view(), name='get_acc_master'),
@@ -28,4 +25,8 @@ urlpatterns = [
 
     path('upload-cashandbankaccmaster/', UploadCashAndBankAccMasterAPI.as_view(), name='upload_cashandbankaccmaster'),
     path('get-cashandbankaccmaster/', GetCashAndBankAccMasterAPI.as_view(), name='get_cashandbankaccmaster'),
+
+    # NEW end-points
+    path('upload-accttservicemaster/', UploadAccTtServicemasterAPI.as_view(), name='upload_accttservicemaster'),
+    path('get-accttservicemaster/',    GetAccTtServicemasterAPI.as_view(),    name='get_accttservicemaster'),
 ]
