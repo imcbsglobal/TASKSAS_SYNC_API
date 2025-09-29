@@ -104,3 +104,13 @@ class CashAndBankAccMaster(models.Model):
 
 
 
+class AccTtServicemaster(models.Model):
+    slno   = models.DecimalField(max_digits=10, decimal_places=0, primary_key=True)
+    type   = models.CharField(max_length=20, blank=True, null=True)
+    code   = models.CharField(max_length=30, blank=True, null=True)
+    name   = models.CharField(max_length=200, blank=True, null=True)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'acc_tt_servicemaster'
+        managed  = True

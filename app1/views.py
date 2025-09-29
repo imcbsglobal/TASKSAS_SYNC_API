@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast,CashAndBankAccMaster
+from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast,CashAndBankAccMaster,AccTtServicemaster
 
 
 class UploadAccUsersAPI(APIView):
@@ -333,6 +333,42 @@ class GetCashAndBankAccMasterAPI(APIView):
         } for m in cashandbankaccmaster]
 
         return Response({"count": len(data), "cashandbankaccmaster": data}, status=200)
+    
+
+
+class UploadAccTtServicemasterAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+        if not isinstance(data, list):
+            return Response({"error": "Expected list"}, status=400)
+
+        try:
+            AccTtServicemaster.objects.filter(client_id=client_id).delete()
+            for row in data:
+                AccTtServicemaster.objects.create(
+                    slno=row['slno'],
+                    type=row.get('type'),
+                    code=row.get('code'),
+                    name=row.get('name'),
+                    client_id=client_id
+                )
+            return Response({"message": f"{len(data)} acc_tt_servicemaster rows uploaded"}, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccTtServicemasterAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        rows = AccTtServicemaster.objects.filter(client_id=client_id)
+        data = [{"slno": r.slno, "type": r.type, "code": r.code, "name": r.name} for r in rows]
+        return Response({"count": len(data), "acc_tt_servicemaster": data}, status=200)
 
 # GET http://127.0.0.1:8000/api/get-users/?client_id=CLIENT001
 # GET http://127.0.0.1:8000/api/get-misel/?client_id=CLIENT001
