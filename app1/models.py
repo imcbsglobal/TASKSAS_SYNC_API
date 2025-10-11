@@ -5,7 +5,7 @@ class AccUsers(models.Model):
     pass_field = models.CharField(max_length=100, db_column='pass')
     role = models.CharField(max_length=30, blank=True, null=True)
     accountcode = models.CharField(max_length=30, blank=True, null=True)
-    client_id = models.CharField(max_length=100)  # <-- ADD THIS
+    client_id = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'acc_users'
@@ -23,31 +23,31 @@ class Misel(models.Model):
     address3 = models.CharField(max_length=50, blank=True, null=True)
     pagers = models.CharField(max_length=60, blank=True, null=True)
     tinno = models.CharField(max_length=30, blank=True, null=True)
-    client_id = models.CharField(max_length=100)  # <-- ADD THIS
+    client_id = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'misel'
         managed = True
 
 
-
 class AccMaster(models.Model):
-    id = models.AutoField(primary_key=True)  # Add auto-incrementing primary key
-    code = models.CharField(max_length=30)   # Remove primary_key=True from code
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=30)
     name = models.CharField(max_length=200, blank=True, null=True)
+    super_code = models.CharField(max_length=5, blank=True, null=True)
     opening_balance = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     debit = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     credit = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     place = models.CharField(max_length=100, blank=True, null=True)
     phone2 = models.CharField(max_length=60, blank=True, null=True)
     openingdepartment = models.CharField(max_length=100, blank=True, null=True)
-    area = models.CharField(max_length=200, blank=True, null=True)  # New field added
+    area = models.CharField(max_length=200, blank=True, null=True)
     client_id = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'acc_master'
         managed = True
-        unique_together = ('code', 'client_id')  # This ensures code is unique per client
+        unique_together = ('code', 'client_id')
 
 
 class AccLedgers(models.Model):
@@ -60,6 +60,7 @@ class AccLedgers(models.Model):
     entry_date = models.DateField(blank=True, null=True)
     voucher_no = models.IntegerField(blank=True, null=True)
     narration = models.TextField(blank=True, null=True)
+    super_code = models.CharField(max_length=5, blank=True, null=True)
     client_id = models.CharField(max_length=100)
 
     class Meta:
@@ -82,10 +83,8 @@ class AccInvmast(models.Model):
         managed = True
 
 
-
-
 class CashAndBankAccMaster(models.Model):
-    id = models.AutoField(primary_key=True)  # Add explicit primary key
+    id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=30)
     name = models.CharField(max_length=250)
     super_code = models.CharField(max_length=5, blank=True, null=True)
@@ -98,19 +97,19 @@ class CashAndBankAccMaster(models.Model):
     class Meta:
         db_table = 'cashandbankaccmaster'
         managed = True
-        unique_together = ('code', 'client_id')  # Keep unique constraint on business logic
-
-
-
+        unique_together = ('code', 'client_id')
 
 
 class AccTtServicemaster(models.Model):
-    slno   = models.DecimalField(max_digits=10, decimal_places=0, primary_key=True)
-    type   = models.CharField(max_length=20, blank=True, null=True)
-    code   = models.CharField(max_length=30, blank=True, null=True)
-    name   = models.CharField(max_length=200, blank=True, null=True)
+    # FIXED: Use AutoField for id and make slno a regular field with unique constraint per client
+    id = models.AutoField(primary_key=True)
+    slno = models.IntegerField()
+    type = models.CharField(max_length=20, blank=True, null=True)
+    code = models.CharField(max_length=30, blank=True, null=True)
+    name = models.CharField(max_length=200, blank=True, null=True)
     client_id = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'acc_tt_servicemaster'
-        managed  = True
+        managed = True
+        unique_together = ('slno', 'client_id')  # Ensures slno is unique per client

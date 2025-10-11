@@ -1,7 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast,CashAndBankAccMaster,AccTtServicemaster
+from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster
+import traceback
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UploadAccUsersAPI(APIView):
@@ -30,6 +34,7 @@ class UploadAccUsersAPI(APIView):
             return Response({"message": f"{len(data)} users uploaded for client_id {client_id}."}, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadAccUsersAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
 
@@ -82,6 +87,7 @@ class UploadMiselAPI(APIView):
             return Response({"message": f"{len(data)} misel records uploaded for client_id {client_id}."}, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadMiselAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
 
@@ -107,6 +113,7 @@ class GetMiselAPI(APIView):
 
         return Response({"count": len(data), "misel": data}, status=200)
 
+
 class UploadAccMasterAPI(APIView):
     def post(self, request):
         data = request.data
@@ -120,17 +127,16 @@ class UploadAccMasterAPI(APIView):
             return Response({"error": "Expected a list of acc_master items."}, status=400)
 
         try:
-            # Only delete existing data if not appending
             if not append:
                 AccMaster.objects.filter(client_id=client_id).delete()
 
             for item in data:
-                # Use get_or_create or update_or_create to handle duplicates
                 acc_master, created = AccMaster.objects.update_or_create(
                     code=item['code'],
                     client_id=client_id,
                     defaults={
                         'name': item.get('name'),
+                        'super_code': item.get('super_code'),
                         'opening_balance': item.get('opening_balance'),
                         'debit': item.get('debit'),
                         'credit': item.get('credit'),
@@ -145,6 +151,7 @@ class UploadAccMasterAPI(APIView):
             return Response({"message": f"{len(data)} acc_master records {action} for client_id {client_id}."}, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadAccMasterAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
 
@@ -159,17 +166,17 @@ class GetAccMasterAPI(APIView):
         data = [{
             "code": m.code,
             "name": m.name,
+            "super_code": m.super_code if m.super_code else "",
             "opening_balance": str(m.opening_balance) if m.opening_balance is not None else None,
             "debit": str(m.debit) if m.debit is not None else None,
             "credit": str(m.credit) if m.credit is not None else None,
             "place": m.place,
             "phone2": m.phone2,
             "openingdepartment": m.openingdepartment,
-            "area": m.area if m.area else ""  # ensure area always included
+            "area": m.area if m.area else ""
         } for m in acc_master]
 
         return Response({"count": len(data), "acc_master": data}, status=200)
-
 
 
 class UploadAccLedgersAPI(APIView):
@@ -185,7 +192,6 @@ class UploadAccLedgersAPI(APIView):
             return Response({"error": "Expected a list of acc_ledgers items."}, status=400)
 
         try:
-            # Only delete existing data if not appending
             if not append:
                 AccLedgers.objects.filter(client_id=client_id).delete()
 
@@ -199,6 +205,7 @@ class UploadAccLedgersAPI(APIView):
                     entry_date=item.get('entry_date'),
                     voucher_no=item.get('voucher_no'),
                     narration=item.get('narration'),
+                    super_code=item.get('super_code'),
                     client_id=client_id
                 )
 
@@ -206,6 +213,7 @@ class UploadAccLedgersAPI(APIView):
             return Response({"message": f"{len(data)} acc_ledgers records {action} for client_id {client_id}."}, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadAccLedgersAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
 
@@ -225,7 +233,8 @@ class GetAccLedgersAPI(APIView):
             "entry_mode": l.entry_mode,
             "entry_date": l.entry_date.strftime('%Y-%m-%d') if l.entry_date else None,
             "voucher_no": l.voucher_no,
-            "narration": l.narration
+            "narration": l.narration,
+            "super_code": l.super_code if l.super_code else ""
         } for l in acc_ledgers]
 
         return Response({"count": len(data), "acc_ledgers": data}, status=200)
@@ -259,6 +268,7 @@ class UploadAccInvmastAPI(APIView):
             return Response({"message": f"{len(data)} acc_invmast records uploaded for client_id {client_id}."}, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadAccInvmastAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
 
@@ -280,11 +290,12 @@ class GetAccInvmastAPI(APIView):
         } for i in acc_invmast]
 
         return Response({"count": len(data), "acc_invmast": data}, status=200)
-    
+
 class UploadCashAndBankAccMasterAPI(APIView):
     def post(self, request):
         data = request.data
         client_id = request.query_params.get('client_id')
+        force_clear = request.query_params.get('force_clear', 'false').lower() == 'true'
 
         if not client_id:
             return Response({"error": "Missing client_id in query parameters."}, status=400)
@@ -293,9 +304,16 @@ class UploadCashAndBankAccMasterAPI(APIView):
             return Response({"error": "Expected a list of cashandbankaccmaster items."}, status=400)
 
         try:
-            # Delete existing records for this client_id
-            CashAndBankAccMaster.objects.filter(client_id=client_id).delete()
+            # Always clear existing data first to avoid duplicate key errors
+            deleted_count = CashAndBankAccMaster.objects.filter(client_id=client_id).delete()[0]
+            if deleted_count > 0:
+                logger.info(f"Deleted {deleted_count} existing cashandbankaccmaster records for client {client_id}")
+            
+            # If empty list, just return success after clearing
+            if len(data) == 0:
+                return Response({"message": f"Cleared cashandbankaccmaster data for client_id {client_id}."}, status=200)
 
+            # Insert new records
             for item in data:
                 CashAndBankAccMaster.objects.create(
                     code=item['code'],
@@ -311,6 +329,7 @@ class UploadCashAndBankAccMasterAPI(APIView):
             return Response({"message": f"{len(data)} cashandbankaccmaster records uploaded for client_id {client_id}."}, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadCashAndBankAccMasterAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
 
@@ -333,42 +352,101 @@ class GetCashAndBankAccMasterAPI(APIView):
         } for m in cashandbankaccmaster]
 
         return Response({"count": len(data), "cashandbankaccmaster": data}, status=200)
-    
 
 
 class UploadAccTtServicemasterAPI(APIView):
     def post(self, request):
-        data = request.data
-        client_id = request.query_params.get('client_id')
-        if not client_id:
-            return Response({"error": "Missing client_id"}, status=400)
-        if not isinstance(data, list):
-            return Response({"error": "Expected list"}, status=400)
-
+        """
+        Upload acc_tt_servicemaster data with enhanced error handling
+        """
         try:
-            AccTtServicemaster.objects.filter(client_id=client_id).delete()
-            for row in data:
-                AccTtServicemaster.objects.create(
-                    slno=row['slno'],
-                    type=row.get('type'),
-                    code=row.get('code'),
-                    name=row.get('name'),
-                    client_id=client_id
-                )
-            return Response({"message": f"{len(data)} acc_tt_servicemaster rows uploaded"}, status=201)
+            data = request.data
+            client_id = request.query_params.get('client_id')
+            
+            # Validation
+            if not client_id:
+                logger.error("Missing client_id in request")
+                return Response({"error": "Missing client_id"}, status=400)
+            
+            if not isinstance(data, list):
+                logger.error(f"Expected list but got {type(data)}")
+                return Response({"error": "Expected list"}, status=400)
+            
+            if len(data) == 0:
+                logger.warning("Empty data array received")
+                return Response({"message": "No data to upload"}, status=200)
+            
+            # Log first record for debugging
+            logger.info(f"Received {len(data)} records. First record: {data[0] if data else 'None'}")
+            
+            # Delete existing records
+            deleted_count = AccTtServicemaster.objects.filter(client_id=client_id).delete()[0]
+            logger.info(f"Deleted {deleted_count} existing records for client {client_id}")
+            
+            # Insert new records
+            created_count = 0
+            for idx, row in enumerate(data):
+                try:
+                    # Validate required fields
+                    if 'slno' not in row:
+                        logger.error(f"Record {idx}: Missing 'slno' field. Data: {row}")
+                        continue
+                    
+                    # Convert slno to integer if it's not already
+                    slno_value = int(float(row['slno'])) if row['slno'] is not None else None
+                    
+                    if slno_value is None:
+                        logger.error(f"Record {idx}: slno is None. Data: {row}")
+                        continue
+                    
+                    AccTtServicemaster.objects.create(
+                        slno=slno_value,
+                        type=row.get('type'),
+                        code=row.get('code'),
+                        name=row.get('name'),
+                        client_id=client_id
+                    )
+                    created_count += 1
+                    
+                except Exception as row_error:
+                    logger.error(f"Error processing record {idx}: {str(row_error)}. Data: {row}")
+                    logger.error(traceback.format_exc())
+                    continue
+            
+            logger.info(f"Successfully created {created_count} records")
+            return Response({
+                "message": f"{created_count} acc_tt_servicemaster rows uploaded successfully",
+                "created": created_count,
+                "total_received": len(data)
+            }, status=201)
+            
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            error_msg = f"Critical error in UploadAccTtServicemasterAPI: {str(e)}"
+            logger.error(error_msg)
+            logger.error(traceback.format_exc())
+            return Response({"error": error_msg}, status=500)
 
 
 class GetAccTtServicemasterAPI(APIView):
     def get(self, request):
-        client_id = request.query_params.get('client_id')
-        if not client_id:
-            return Response({"error": "Missing client_id"}, status=400)
+        try:
+            client_id = request.query_params.get('client_id')
+            if not client_id:
+                return Response({"error": "Missing client_id"}, status=400)
 
-        rows = AccTtServicemaster.objects.filter(client_id=client_id)
-        data = [{"slno": r.slno, "type": r.type, "code": r.code, "name": r.name} for r in rows]
-        return Response({"count": len(data), "acc_tt_servicemaster": data}, status=200)
+            rows = AccTtServicemaster.objects.filter(client_id=client_id)
+            data = [{
+                "slno": int(r.slno),
+                "type": r.type,
+                "code": r.code,
+                "name": r.name
+            } for r in rows]
+            
+            return Response({"count": len(data), "acc_tt_servicemaster": data}, status=200)
+            
+        except Exception as e:
+            logger.error(f"Error in GetAccTtServicemasterAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
 
 # GET http://127.0.0.1:8000/api/get-users/?client_id=CLIENT001
 # GET http://127.0.0.1:8000/api/get-misel/?client_id=CLIENT001
