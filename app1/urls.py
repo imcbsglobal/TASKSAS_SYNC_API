@@ -7,7 +7,9 @@ from .views import (
     UploadAccInvmastAPI, GetAccInvmastAPI,
     UploadCashAndBankAccMasterAPI, GetCashAndBankAccMasterAPI,
     # NEW imports
-    UploadAccTtServicemasterAPI, GetAccTtServicemasterAPI
+    UploadAccTtServicemasterAPI, GetAccTtServicemasterAPI,
+    UploadSalesTodayAPI, GetSalesTodayAPI,
+    UploadPurchaseTodayAPI, GetPurchaseTodayAPI
 )
 
 
@@ -30,5 +32,10 @@ urlpatterns = [
     # NEW end-points
     path('upload-accttservicemaster/', UploadAccTtServicemasterAPI.as_view(), name='upload_accttservicemaster'),
     path('get-accttservicemaster/',    GetAccTtServicemasterAPI.as_view(),    name='get_accttservicemaster'),
+    path('upload-sales-today/', UploadSalesTodayAPI.as_view(), name='upload_sales_today'),
+    path('get-sales-today/', GetSalesTodayAPI.as_view(), name='get_sales_today'),
+    path('upload-purchase-today/', UploadPurchaseTodayAPI.as_view(), name='upload_purchase_today'),
+    path('get-purchase-today/', GetPurchaseTodayAPI.as_view(), name='get_purchase_today'),
+
 ]
 # xh

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster
+from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster,SalesToday, PurchaseToday
 import traceback
 import logging
 
@@ -453,3 +453,118 @@ class GetAccTtServicemasterAPI(APIView):
 # GET http://127.0.0.1:8000/api/get-acc-master/?client_id=CLIENT001
 # GET http://127.0.0.1:8000/api/get-acc-ledgers/?client_id=CLIENT001
 # GET http://127.0.0.1:8000/api/get-acc-invmast/?client_id=CLIENT001
+
+
+
+# NEW: Sales Today API Views
+class UploadSalesTodayAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of sales_today items."}, status=400)
+
+        try:
+            # Clear existing data
+            SalesToday.objects.filter(client_id=client_id).delete()
+
+            # Insert new records
+            for item in data:
+                SalesToday.objects.create(
+                    nettotal=item.get('nettotal'),
+                    billno=item.get('billno'),
+                    type=item.get('type'),
+                    userid=item.get('userid'),
+                    invdate=item.get('invdate'),
+                    customername=item.get('customername'),
+                    client_id=client_id
+                )
+
+            return Response({
+                "message": f"{len(data)} sales_today records uploaded for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadSalesTodayAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetSalesTodayAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        sales_today = SalesToday.objects.filter(client_id=client_id).order_by('-invdate', '-billno')
+        data = [{
+            "nettotal": str(s.nettotal) if s.nettotal else None,
+            "billno": s.billno,
+            "type": s.type,
+            "userid": s.userid,
+            "invdate": s.invdate.strftime('%Y-%m-%d') if s.invdate else None,
+            "customername": s.customername
+        } for s in sales_today]
+
+        return Response({"count": len(data), "sales_today": data}, status=200)
+
+
+# NEW: Purchase Today API Views
+class UploadPurchaseTodayAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of purchase_today items."}, status=400)
+
+        try:
+            # Clear existing data
+            PurchaseToday.objects.filter(client_id=client_id).delete()
+
+            # Insert new records
+            for item in data:
+                PurchaseToday.objects.create(
+                    net=item.get('net'),
+                    billno=item.get('billno'),
+                    pbillno=item.get('pbillno'),
+                    date=item.get('date'),
+                    total=item.get('total'),
+                    suppliername=item.get('suppliername'),
+                    client_id=client_id
+                )
+
+            return Response({
+                "message": f"{len(data)} purchase_today records uploaded for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadPurchaseTodayAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetPurchaseTodayAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        purchase_today = PurchaseToday.objects.filter(client_id=client_id).order_by('-date', '-billno')
+        data = [{
+            "net": str(p.net) if p.net else None,
+            "billno": p.billno,
+            "pbillno": p.pbillno,
+            "date": p.date.strftime('%Y-%m-%d') if p.date else None,
+            "total": str(p.total) if p.total else None,
+            "suppliername": p.suppliername
+        } for p in purchase_today]
+
+        return Response({"count": len(data), "purchase_today": data}, status=200)
