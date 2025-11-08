@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster,SalesToday, PurchaseToday
+from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster, SalesDaywise, SalesMonthwise,SalesToday, PurchaseToday
 import traceback
 import logging
 
@@ -568,3 +568,115 @@ class GetPurchaseTodayAPI(APIView):
         } for p in purchase_today]
 
         return Response({"count": len(data), "purchase_today": data}, status=200)
+    
+
+
+
+
+class UploadSalesDaywiseAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of sales_daywise items."}, status=400)
+
+        try:
+            # Clear existing data for this client
+            SalesDaywise.objects.filter(client_id=client_id).delete()
+
+            # Insert new records
+            for item in data:
+                SalesDaywise.objects.create(
+                    date=item.get('date'),
+                    total_bills=item.get('total_bills', 0),
+                    total_amount=item.get('total_amount', 0),
+                    client_id=client_id
+                )
+
+            return Response({
+                "message": f"{len(data)} sales_daywise records uploaded for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadSalesDaywiseAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetSalesDaywiseAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        sales_daywise = SalesDaywise.objects.filter(client_id=client_id).order_by('-date')
+        data = [{
+            "date": s.date.strftime('%Y-%m-%d') if s.date else None,
+            "total_bills": s.total_bills,
+            "total_amount": str(s.total_amount) if s.total_amount else "0.000"
+        } for s in sales_daywise]
+
+        return Response({"count": len(data), "sales_daywise": data}, status=200)
+
+
+# NEW: Sales Monthwise API Views
+class UploadSalesMonthwiseAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of sales_monthwise items."}, status=400)
+
+        try:
+            # Get current year to limit deletion scope
+            from datetime import datetime
+            current_year = datetime.now().year
+            
+            # Clear existing data for current year only
+            SalesMonthwise.objects.filter(client_id=client_id, year=current_year).delete()
+
+            # Insert new records
+            for item in data:
+                SalesMonthwise.objects.create(
+                    month_name=item.get('month_name'),
+                    month_number=item.get('month_number'),
+                    year=item.get('year', current_year),
+                    total_bills=item.get('total_bills', 0),
+                    total_amount=item.get('total_amount', 0),
+                    client_id=client_id
+                )
+
+            return Response({
+                "message": f"{len(data)} sales_monthwise records uploaded for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadSalesMonthwiseAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetSalesMonthwiseAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        sales_monthwise = SalesMonthwise.objects.filter(client_id=client_id).order_by('year', 'month_number')
+        data = [{
+            "month_name": s.month_name,
+            "month_number": s.month_number,
+            "year": s.year,
+            "total_bills": s.total_bills,
+            "total_amount": str(s.total_amount) if s.total_amount else "0.000"
+        } for s in sales_monthwise]
+
+        return Response({"count": len(data), "sales_monthwise": data}, status=200)

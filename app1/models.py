@@ -157,3 +157,63 @@ class PurchaseToday(models.Model):
             models.Index(fields=['client_id', 'date']),
             models.Index(fields=['billno']),
         ]
+
+
+
+
+
+
+class PurchaseToday(models.Model):
+    """Purchase records from acc_purchasemaster where billno > 0"""
+    id = models.AutoField(primary_key=True)
+    net = models.DecimalField(max_digits=15, decimal_places=3, blank=True, null=True)
+    billno = models.IntegerField(blank=True, null=True)
+    pbillno = models.IntegerField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    total = models.DecimalField(max_digits=12, decimal_places=3, blank=True, null=True)
+    suppliername = models.CharField(max_length=250, blank=True, null=True)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'purchase_today'
+        managed = True
+        indexes = [
+            models.Index(fields=['client_id', 'date']),
+            models.Index(fields=['billno']),
+        ]
+
+
+class SalesDaywise(models.Model):
+    """Sales summary by date for last 8 days"""
+    id = models.AutoField(primary_key=True)
+    date = models.DateField()
+    total_bills = models.IntegerField(default=0)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=3, default=0)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'sales_daywise'
+        managed = True
+        unique_together = ('date', 'client_id')
+        indexes = [
+            models.Index(fields=['client_id', 'date']),
+        ]
+
+
+class SalesMonthwise(models.Model):
+    """Sales summary by month for current year"""
+    id = models.AutoField(primary_key=True)
+    month_name = models.CharField(max_length=20)  # e.g., "January 2025"
+    month_number = models.IntegerField()  # 1-12
+    year = models.IntegerField()
+    total_bills = models.IntegerField(default=0)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=3, default=0)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'sales_monthwise'
+        managed = True
+        unique_together = ('month_number', 'year', 'client_id')
+        indexes = [
+            models.Index(fields=['client_id', 'year', 'month_number']),
+        ]
