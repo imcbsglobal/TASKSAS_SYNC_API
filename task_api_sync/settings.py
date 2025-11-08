@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'task_api_sync.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'task_sync_db',
+        'NAME': 'task_saas',
         'USER': 'postgres',
         'PASSWORD': 'info@imc',
         'HOST': '88.222.212.14',
