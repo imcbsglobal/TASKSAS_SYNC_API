@@ -12,8 +12,8 @@ DEBUG = True
 
 # FIXED: Added 127.0.0.1 and localhost
 ALLOWED_HOSTS = [
-    "taskwebsyncapi.imcbs.com",
-    "www.taskwebsyncapi.imcbs.com",
+    "tasksassyncapi.imcbs.com",
+    "www.tasksassyncapi.imcbs.com",
     "127.0.0.1",
     "127.0.0.1:8000",
     "localhost"
