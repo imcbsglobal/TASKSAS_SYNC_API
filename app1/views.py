@@ -623,3 +623,265 @@ class GetSalesDaywiseAPI(APIView):
         return Response({"count": len(data), "sales_daywise": data}, status=200)
 
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import (AccProduct, AccProductBatch, AccPriceCode, AccProductPhoto)
+import traceback
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+# ============ ACC_PRODUCT APIs ============
+class UploadAccProductAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of product items."}, status=400)
+
+        try:
+            if not append:
+                AccProduct.objects.filter(client_id=client_id).delete()
+
+            created_count = 0
+            for item in data:
+                if not item.get('code'):
+                    continue
+                
+                AccProduct.objects.update_or_create(
+                    code=item['code'],
+                    client_id=client_id,
+                    defaults={
+                        'name': item.get('name'),
+                        'taxcode': item.get('taxcode'),
+                        'product': item.get('product'),
+                        'brand': item.get('brand'),
+                        'unit': item.get('unit'),
+                        'defected': item.get('defected'),
+                        'text6': item.get('text6'),
+                        'settings': item.get('settings'),
+                    }
+                )
+                created_count += 1
+
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({
+                "message": f"{created_count} products {action} for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadAccProductAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccProductAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        products = AccProduct.objects.filter(client_id=client_id)
+        data = [{
+            "code": p.code,
+            "name": p.name,
+            "taxcode": p.taxcode,
+            "product": p.product,
+            "brand": p.brand,
+            "unit": p.unit,
+            "defected": p.defected,
+            "text6": p.text6,
+            "settings": p.settings,
+        } for p in products]
+
+        return Response({"count": len(data), "products": data}, status=200)
+
+
+# ============ ACC_PRODUCTBATCH APIs ============
+class UploadAccProductBatchAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of product batch items."}, status=400)
+
+        try:
+            if not append:
+                AccProductBatch.objects.filter(client_id=client_id).delete()
+
+            created_count = 0
+            for item in data:
+                if not item.get('productcode'):
+                    continue
+                
+                AccProductBatch.objects.create(
+                    productcode=item['productcode'],
+                    salesprice=item.get('salesprice'),
+                    secondprice=item.get('secondprice'),
+                    thirdprice=item.get('thirdprice'),
+                    fourthprice=item.get('fourthprice'),
+                    nlc1=item.get('nlc1'),
+                    quantity=item.get('quantity'),
+                    barcode=item.get('barcode'),
+                    bmrp=item.get('bmrp'),
+                    cost=item.get('cost'),
+                    expirydate=item.get('expirydate'),
+                    modified=item.get('modified'),
+                    modifiedtime=item.get('modifiedtime'),
+                    settings=item.get('settings'),
+                    client_id=client_id
+                )
+                created_count += 1
+
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({
+                "message": f"{created_count} product batches {action} for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadAccProductBatchAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccProductBatchAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        batches = AccProductBatch.objects.filter(client_id=client_id)
+        data = [{
+            "productcode": b.productcode,
+            "salesprice": str(b.salesprice) if b.salesprice else None,
+            "secondprice": str(b.secondprice) if b.secondprice else None,
+            "thirdprice": str(b.thirdprice) if b.thirdprice else None,
+            "fourthprice": str(b.fourthprice) if b.fourthprice else None,
+            "nlc1": str(b.nlc1) if b.nlc1 else None,
+            "quantity": str(b.quantity) if b.quantity else None,
+            "barcode": b.barcode,
+            "bmrp": str(b.bmrp) if b.bmrp else None,
+            "cost": str(b.cost) if b.cost else None,
+            "expirydate": b.expirydate.strftime('%Y-%m-%d') if b.expirydate else None,
+            "modified": b.modified.strftime('%Y-%m-%d') if b.modified else None,
+            "modifiedtime": b.modifiedtime.strftime('%H:%M:%S') if b.modifiedtime else None,
+            "settings": b.settings,
+        } for b in batches]
+
+        return Response({"count": len(data), "product_batches": data}, status=200)
+
+
+# ============ ACC_PRICECODE APIs ============
+class UploadAccPriceCodeAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of price code items."}, status=400)
+
+        try:
+            AccPriceCode.objects.filter(client_id=client_id).delete()
+
+            created_count = 0
+            for item in data:
+                if not item.get('code'):
+                    continue
+                
+                AccPriceCode.objects.create(
+                    code=item['code'],
+                    name=item.get('name', ''),
+                    client_id=client_id
+                )
+                created_count += 1
+
+            return Response({
+                "message": f"{created_count} price codes uploaded for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadAccPriceCodeAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccPriceCodeAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        price_codes = AccPriceCode.objects.filter(client_id=client_id)
+        data = [{
+            "code": pc.code,
+            "name": pc.name,
+        } for pc in price_codes]
+
+        return Response({"count": len(data), "price_codes": data}, status=200)
+
+
+# ============ ACC_PRODUCTPHOTO APIs ============
+class UploadAccProductPhotoAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list of product photo items."}, status=400)
+
+        try:
+            if not append:
+                AccProductPhoto.objects.filter(client_id=client_id).delete()
+
+            created_count = 0
+            for item in data:
+                AccProductPhoto.objects.create(
+                    code=item.get('code'),
+                    url=item.get('url'),
+                    client_id=client_id
+                )
+                created_count += 1
+
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({
+                "message": f"{created_count} product photos {action} for client_id {client_id}."
+            }, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadAccProductPhotoAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccProductPhotoAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        photos = AccProductPhoto.objects.filter(client_id=client_id)
+        data = [{
+            "code": ph.code,
+            "url": ph.url,
+        } for ph in photos]
+
+        return Response({"count": len(data), "product_photos": data}, status=200)

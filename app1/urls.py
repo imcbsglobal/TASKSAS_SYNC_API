@@ -12,6 +12,10 @@ from .views import (
     UploadPurchaseTodayAPI, GetPurchaseTodayAPI,
 
     UploadSalesDaywiseAPI, GetSalesDaywiseAPI,
+    UploadAccProductAPI, GetAccProductAPI,
+    UploadAccProductBatchAPI, GetAccProductBatchAPI,
+    UploadAccPriceCodeAPI, GetAccPriceCodeAPI,
+    UploadAccProductPhotoAPI, GetAccProductPhotoAPI,
 
     
 )
@@ -45,6 +49,19 @@ urlpatterns = [
 
     path('upload-sales-daywise/', UploadSalesDaywiseAPI.as_view(), name='upload_sales_daywise'),
     path('get-sales-daywise/', GetSalesDaywiseAPI.as_view(), name='get_sales_daywise'),
+
+
+    path('upload-acc-product/', UploadAccProductAPI.as_view(), name='upload_acc_product'),
+    path('get-acc-product/', GetAccProductAPI.as_view(), name='get_acc_product'),
+    
+    path('upload-acc-productbatch/', UploadAccProductBatchAPI.as_view(), name='upload_acc_productbatch'),
+    path('get-acc-productbatch/', GetAccProductBatchAPI.as_view(), name='get_acc_productbatch'),
+    
+    path('upload-acc-pricecode/', UploadAccPriceCodeAPI.as_view(), name='upload_acc_pricecode'),
+    path('get-acc-pricecode/', GetAccPriceCodeAPI.as_view(), name='get_acc_pricecode'),
+    
+    path('upload-acc-productphoto/', UploadAccProductPhotoAPI.as_view(), name='upload_acc_productphoto'),
+    path('get-acc-productphoto/', GetAccProductPhotoAPI.as_view(), name='get_acc_productphoto'),
     
 
 ]

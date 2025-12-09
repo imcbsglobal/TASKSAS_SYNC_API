@@ -217,3 +217,79 @@ class SalesMonthwise(models.Model):
         indexes = [
             models.Index(fields=['client_id', 'year', 'month_number']),
         ]
+
+
+
+    
+class AccProduct(models.Model):
+    """Product master table"""
+    code = models.CharField(max_length=30, primary_key=True)
+    name = models.CharField(max_length=200, blank=True, null=True)
+    taxcode = models.CharField(max_length=5, blank=True, null=True)
+    product = models.CharField(max_length=30, blank=True, null=True)
+    brand = models.CharField(max_length=30, blank=True, null=True)
+    unit = models.CharField(max_length=10, blank=True, null=True)
+    defected = models.CharField(max_length=1, blank=True, null=True)
+    text6 = models.CharField(max_length=40, blank=True, null=True)
+    settings = models.CharField(max_length=300, blank=True, null=True)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'acc_product'
+        managed = True
+        unique_together = ('code', 'client_id')
+
+
+class AccProductBatch(models.Model):
+    """Product batch/pricing table"""
+    id = models.AutoField(primary_key=True)
+    productcode = models.CharField(max_length=30)
+    salesprice = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    secondprice = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    thirdprice = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    fourthprice = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    nlc1 = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    quantity = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    barcode = models.CharField(max_length=35, blank=True, null=True)
+    bmrp = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    cost = models.DecimalField(max_digits=15, decimal_places=5, blank=True, null=True)
+    expirydate = models.DateField(blank=True, null=True)
+    modified = models.DateField(blank=True, null=True)
+    modifiedtime = models.TimeField(blank=True, null=True)
+    settings = models.CharField(max_length=300, blank=True, null=True)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'acc_productbatch'
+        managed = True
+        indexes = [
+            models.Index(fields=['productcode', 'client_id']),
+            models.Index(fields=['barcode']),
+        ]
+
+
+class AccPriceCode(models.Model):
+    """Price code master table"""
+    code = models.CharField(max_length=2, primary_key=True)
+    name = models.CharField(max_length=30)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'acc_pricecode'
+        managed = True
+        unique_together = ('code', 'client_id')
+
+
+class AccProductPhoto(models.Model):
+    """Product photos table"""
+    id = models.AutoField(primary_key=True)
+    code = models.CharField(max_length=30, blank=True, null=True)
+    url = models.CharField(max_length=300, blank=True, null=True)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'acc_productphoto'
+        managed = True
+        indexes = [
+            models.Index(fields=['code', 'client_id']),
+        ]
