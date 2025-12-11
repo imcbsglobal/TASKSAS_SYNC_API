@@ -300,3 +300,18 @@ class AccProductPhoto(models.Model):
         indexes = [
             models.Index(fields=['code', 'client_id']),
         ]
+
+
+
+
+
+class AccSalesTypes(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=150, blank=True, null=True)
+    goddown = models.CharField(max_length=50, blank=True, null=True)
+    user = models.CharField(max_length=50, blank=True, null=True)
+    client_id = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = 'acc_sales_types'
+        managed = True

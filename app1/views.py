@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster, SalesDaywise, SalesMonthwise,SalesToday, PurchaseToday
+from .models import AccSalesTypes, AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster, SalesDaywise, SalesMonthwise,SalesToday, PurchaseToday
 import traceback
 import logging
 
@@ -911,3 +911,53 @@ class GetAccProductPhotoAPI(APIView):
         } for ph in photos]
 
         return Response({"count": len(data), "product_photos": data}, status=200)
+
+
+
+
+
+class UploadAccSalesTypesAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected a list"}, status=400)
+
+        try:
+            AccSalesTypes.objects.filter(client_id=client_id).delete()
+
+            for item in data:
+                AccSalesTypes.objects.create(
+                    name=item.get('name'),
+                    goddown=item.get('goddown'),
+                    user=item.get('user'),
+                    client_id=client_id
+                )
+
+            return Response({"message": f"{len(data)} acc_sales_types uploaded"}, status=201)
+
+        except Exception as e:
+            logger.error(f"Error in UploadAccSalesTypesAPI: {e}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccSalesTypesAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        rows = AccSalesTypes.objects.filter(client_id=client_id)
+
+        data = [{
+            "name": r.name,
+            "goddown": r.goddown,
+            "user": r.user
+        } for r in rows]
+
+        return Response({"count": len(data), "acc_sales_types": data}, status=200)

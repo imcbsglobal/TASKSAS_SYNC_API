@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    UploadAccUsersAPI, GetAccUsersAPI,
+    GetAccSalesTypesAPI, UploadAccSalesTypesAPI, UploadAccUsersAPI, GetAccUsersAPI,
     UploadMiselAPI, GetMiselAPI,
     UploadAccMasterAPI, GetAccMasterAPI,
     UploadAccLedgersAPI, GetAccLedgersAPI,
@@ -62,6 +62,9 @@ urlpatterns = [
     
     path('upload-acc-productphoto/', UploadAccProductPhotoAPI.as_view(), name='upload_acc_productphoto'),
     path('get-acc-productphoto/', GetAccProductPhotoAPI.as_view(), name='get_acc_productphoto'),
+    path('upload-acc-sales-types/', UploadAccSalesTypesAPI.as_view(), name='upload_acc_sales_types'),
+    path('get-acc-sales-types/', GetAccSalesTypesAPI.as_view(), name='get_acc_sales_types'),
+
     
 
 ]
