@@ -667,6 +667,8 @@ class UploadAccProductAPI(APIView):
                         'defected': item.get('defected'),
                         'text6': item.get('text6'),
                         'settings': item.get('settings'),
+                        'catagory': item.get('catagory'),
+                        'company': item.get('company'),
                     }
                 )
                 created_count += 1
@@ -689,6 +691,7 @@ class GetAccProductAPI(APIView):
             return Response({"error": "Missing client_id in query parameters."}, status=400)
 
         products = AccProduct.objects.filter(client_id=client_id)
+
         data = [{
             "code": p.code,
             "name": p.name,
@@ -699,9 +702,12 @@ class GetAccProductAPI(APIView):
             "defected": p.defected,
             "text6": p.text6,
             "settings": p.settings,
+            "catagory": p.catagory,
+            "company": p.company,
         } for p in products]
 
         return Response({"count": len(data), "products": data}, status=200)
+
 
 
 # ============ ACC_PRODUCTBATCH APIs ============

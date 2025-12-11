@@ -232,6 +232,8 @@ class AccProduct(models.Model):
     defected = models.CharField(max_length=1, blank=True, null=True)
     text6 = models.CharField(max_length=40, blank=True, null=True)
     settings = models.CharField(max_length=300, blank=True, null=True)
+    catagory = models.CharField(max_length=50, blank=True, null=True)
+    company  = models.CharField(max_length=50, blank=True, null=True)
     client_id = models.CharField(max_length=100)
 
     class Meta:
