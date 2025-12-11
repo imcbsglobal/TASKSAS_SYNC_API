@@ -131,7 +131,7 @@ class UploadAccMasterAPI(APIView):
                 AccMaster.objects.filter(client_id=client_id).delete()
 
             for item in data:
-                acc_master, created = AccMaster.objects.update_or_create(
+                AccMaster.objects.update_or_create(
                     code=item['code'],
                     client_id=client_id,
                     defaults={
@@ -140,6 +140,14 @@ class UploadAccMasterAPI(APIView):
                         'opening_balance': item.get('opening_balance'),
                         'debit': item.get('debit'),
                         'credit': item.get('credit'),
+
+                        # NEW FIELDS
+                        'address': item.get('address'),
+                        'city': item.get('city'),
+                        'phone': item.get('phone'),
+                        'gstin': item.get('gstin'),
+                        'remarkcolumntitle': item.get('remarkcolumntitle'),
+
                         'place': item.get('place'),
                         'phone2': item.get('phone2'),
                         'openingdepartment': item.get('openingdepartment'),
@@ -148,11 +156,14 @@ class UploadAccMasterAPI(APIView):
                 )
 
             action = "appended" if append else "uploaded (old data cleared)"
-            return Response({"message": f"{len(data)} acc_master records {action} for client_id {client_id}."}, status=201)
+            return Response({
+                "message": f"{len(data)} acc_master records {action} for client_id {client_id}."
+            }, status=201)
 
         except Exception as e:
             logger.error(f"Error in UploadAccMasterAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
+
 
 
 class GetAccMasterAPI(APIView):
@@ -163,6 +174,7 @@ class GetAccMasterAPI(APIView):
             return Response({"error": "Missing client_id in query parameters."}, status=400)
 
         acc_master = AccMaster.objects.filter(client_id=client_id)
+
         data = [{
             "code": m.code,
             "name": m.name,
@@ -170,10 +182,18 @@ class GetAccMasterAPI(APIView):
             "opening_balance": str(m.opening_balance) if m.opening_balance is not None else None,
             "debit": str(m.debit) if m.debit is not None else None,
             "credit": str(m.credit) if m.credit is not None else None,
+
+            # NEW FIELDS
+            "address": m.address,
+            "city": m.city,
+            "phone": m.phone,
+            "gstin": m.gstin,
+            "remarkcolumntitle": m.remarkcolumntitle,
+
             "place": m.place,
             "phone2": m.phone2,
             "openingdepartment": m.openingdepartment,
-            "area": m.area if m.area else ""
+            "area": m.area if m.area else "",
         } for m in acc_master]
 
         return Response({"count": len(data), "acc_master": data}, status=200)
