@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccSalesTypes, AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster, SalesDaywise, SalesMonthwise,SalesToday, PurchaseToday
+from .models import AccGoddown, AccGoddownStock, AccSalesTypes, AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster, SalesDaywise, SalesMonthwise,SalesToday, PurchaseToday
 import traceback
 import logging
 
@@ -961,3 +961,104 @@ class GetAccSalesTypesAPI(APIView):
         } for r in rows]
 
         return Response({"count": len(data), "acc_sales_types": data}, status=200)
+
+
+
+class UploadAccGoddownAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get("client_id")
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected list"}, status=400)
+
+        try:
+            AccGoddown.objects.filter(client_id=client_id).delete()
+
+            for item in data:
+                AccGoddown.objects.create(
+                    goddownid=item['goddownid'],
+                    name=item['name'],
+                    client_id=client_id
+                )
+
+            return Response({"message": f"{len(data)} goddowns uploaded"}, status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+
+
+class GetAccGoddownAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get("client_id")
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        rows = AccGoddown.objects.filter(client_id=client_id)
+
+        data = [{
+            "goddownid": r.goddownid,
+            "name": r.name,
+        } for r in rows]
+
+        return Response({"count": len(data), "acc_goddown": data}, status=200)
+
+
+
+
+
+class UploadAccGoddownStockAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get("client_id")
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected list"}, status=400)
+
+        try:
+            AccGoddownStock.objects.filter(client_id=client_id).delete()
+
+            for item in data:
+                AccGoddownStock.objects.create(
+                    goddownid=item['goddownid'],
+                    product=item['product'],
+                    quantity=item.get('quantity'),
+                    barcode=item.get('barcode'),
+                    client_id=client_id
+                )
+
+            return Response({"message": f"{len(data)} goddownstock rows uploaded"}, status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+
+
+
+class GetAccGoddownStockAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get("client_id")
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        rows = AccGoddownStock.objects.filter(client_id=client_id)
+
+        data = [{
+            "goddownid": r.goddownid,
+            "product": r.product,
+            "quantity": str(r.quantity) if r.quantity else None,
+            "barcode": r.barcode
+        } for r in rows]
+
+        return Response({"count": len(data), "acc_goddownstock": data}, status=200)

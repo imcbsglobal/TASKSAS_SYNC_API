@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import AccUsers, Misel, AccLedgers, AccMaster, AccInvmast, CashAndBankAccMaster, AccTtServicemaster
+from .models import AccGoddown, AccGoddownStock, AccUsers, Misel, AccLedgers, AccMaster, AccInvmast, CashAndBankAccMaster, AccTtServicemaster
 
 
 class AccUsersSerializer(serializers.ModelSerializer):
@@ -60,3 +60,17 @@ class AccTtServicemasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccTtServicemaster
         fields = ['slno', 'type', 'code', 'name', 'client_id']
+
+
+
+
+class AccGoddownSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccGoddown
+        fields = ['goddownid', 'name', 'client_id']
+
+
+class AccGoddownStockSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccGoddownStock
+        fields = ['goddownid', 'product', 'quantity', 'barcode', 'client_id']
