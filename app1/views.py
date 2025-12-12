@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import AccGoddown, AccGoddownStock, AccSalesTypes, AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster, SalesDaywise, SalesMonthwise,SalesToday, PurchaseToday
+from .models import AccDepartments, AccGoddown, AccGoddownStock, AccSalesTypes, AccUsers, Misel, AccMaster, AccLedgers, AccInvmast, CashAndBankAccMaster, AccTtServicemaster, SalesDaywise, SalesMonthwise,SalesToday, PurchaseToday
 import traceback
 import logging
 
@@ -1062,3 +1062,48 @@ class GetAccGoddownStockAPI(APIView):
         } for r in rows]
 
         return Response({"count": len(data), "acc_goddownstock": data}, status=200)
+
+
+
+class UploadAccDepartmentsAPI(APIView):
+    def post(self, request):
+        data = request.data
+        client_id = request.query_params.get("client_id")
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        if not isinstance(data, list):
+            return Response({"error": "Expected list"}, status=400)
+
+        try:
+            AccDepartments.objects.filter(client_id=client_id).delete()
+
+            for item in data:
+                AccDepartments.objects.create(
+                    department_id=item['department_id'],
+                    department=item['department'],
+                    client_id=client_id
+                )
+
+            return Response({"message": f"{len(data)} departments uploaded"}, status=201)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+
+class GetAccDepartmentsAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get("client_id")
+
+        if not client_id:
+            return Response({"error": "Missing client_id"}, status=400)
+
+        rows = AccDepartments.objects.filter(client_id=client_id)
+
+        data = [{
+            "department_id": r.department_id,
+            "department": r.department,
+        } for r in rows]
+
+        return Response({"count": len(data), "acc_departments": data}, status=200)

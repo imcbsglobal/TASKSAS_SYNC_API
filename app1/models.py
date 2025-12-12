@@ -342,3 +342,10 @@ class AccGoddownStock(models.Model):
         managed = True
 
 
+class AccDepartments(models.Model):
+    department_id = models.CharField(max_length=30)
+    department = models.CharField(max_length=30)
+    client_id = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.department
