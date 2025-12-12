@@ -49,12 +49,6 @@ class AccInvmastSerializer(serializers.ModelSerializer):
                   'paid', 'bill_ref', 'client_id']
 
 
-class CashAndBankAccMasterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CashAndBankAccMaster
-        fields = ['code', 'name', 'super_code', 'opening_balance', 'opening_date', 
-                  'debit', 'credit', 'client_id']
-
 
 class AccTtServicemasterSerializer(serializers.ModelSerializer):
     class Meta:

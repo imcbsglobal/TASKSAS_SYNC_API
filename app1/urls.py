@@ -5,13 +5,12 @@ from .views import (
     UploadAccMasterAPI, GetAccMasterAPI,
     UploadAccLedgersAPI, GetAccLedgersAPI,
     UploadAccInvmastAPI, GetAccInvmastAPI,
-    UploadCashAndBankAccMasterAPI, GetCashAndBankAccMasterAPI,
+    
     # NEW imports
     UploadAccTtServicemasterAPI, GetAccTtServicemasterAPI,
-    UploadSalesTodayAPI, GetSalesTodayAPI,
-    UploadPurchaseTodayAPI, GetPurchaseTodayAPI,
+    
 
-    UploadSalesDaywiseAPI, GetSalesDaywiseAPI,
+    
     UploadAccProductAPI, GetAccProductAPI,
     UploadAccProductBatchAPI, GetAccProductBatchAPI,
     UploadAccPriceCodeAPI, GetAccPriceCodeAPI,
@@ -34,22 +33,16 @@ urlpatterns = [
     path('upload-acc-invmast/', UploadAccInvmastAPI.as_view(), name='upload_acc_invmast'),
     path('get-acc-invmast/', GetAccInvmastAPI.as_view(), name='get_acc_invmast'),
 
-    path('upload-cashandbankaccmaster/', UploadCashAndBankAccMasterAPI.as_view(), name='upload_cashandbankaccmaster'),
-    path('get-cashandbankaccmaster/', GetCashAndBankAccMasterAPI.as_view(), name='get_cashandbankaccmaster'),
+    
 
     # NEW end-points
     path('upload-accttservicemaster/', UploadAccTtServicemasterAPI.as_view(), name='upload_accttservicemaster'),
     path('get-accttservicemaster/',    GetAccTtServicemasterAPI.as_view(),    name='get_accttservicemaster'),
-    path('upload-sales-today/', UploadSalesTodayAPI.as_view(), name='upload_sales_today'),
-    path('get-sales-today/', GetSalesTodayAPI.as_view(), name='get_sales_today'),
-    path('upload-purchase-today/', UploadPurchaseTodayAPI.as_view(), name='upload_purchase_today'),
-    path('get-purchase-today/', GetPurchaseTodayAPI.as_view(), name='get_purchase_today'),
+    
 
 
 
-    path('upload-sales-daywise/', UploadSalesDaywiseAPI.as_view(), name='upload_sales_daywise'),
-    path('get-sales-daywise/', GetSalesDaywiseAPI.as_view(), name='get_sales_daywise'),
-
+    
 
     path('upload-acc-product/', UploadAccProductAPI.as_view(), name='upload_acc_product'),
     path('get-acc-product/', GetAccProductAPI.as_view(), name='get_acc_product'),
