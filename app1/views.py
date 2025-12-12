@@ -667,16 +667,20 @@ class UploadAccProductAPI(APIView):
             return Response({"error": "Expected a list of product items."}, status=400)
 
         try:
+            # Delete old data only if append=false
             if not append:
-                AccProduct.objects.filter(client_id=client_id).delete()
+                deleted_count = AccProduct.objects.filter(client_id=client_id).delete()[0]
+                logger.info(f"Deleted {deleted_count} old product rows for client {client_id}")
 
             created_count = 0
+
             for item in data:
-                if not item.get('code'):
+                code = item.get('code')
+                if not code:
                     continue
-                
+
                 AccProduct.objects.update_or_create(
-                    code=item['code'],
+                    code=code,
                     client_id=client_id,
                     defaults={
                         'name': item.get('name'),
@@ -694,13 +698,16 @@ class UploadAccProductAPI(APIView):
                 created_count += 1
 
             action = "appended" if append else "uploaded (old data cleared)"
-            return Response({
-                "message": f"{created_count} products {action} for client_id {client_id}."
-            }, status=201)
+
+            return Response(
+                {"message": f"{created_count} products {action} for client_id {client_id}."},
+                status=201
+            )
 
         except Exception as e:
             logger.error(f"Error in UploadAccProductAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
+
 
 
 class GetAccProductAPI(APIView):
@@ -727,6 +734,7 @@ class GetAccProductAPI(APIView):
         } for p in products]
 
         return Response({"count": len(data), "products": data}, status=200)
+
 
 
 
