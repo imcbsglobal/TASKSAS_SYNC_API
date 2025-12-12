@@ -319,21 +319,26 @@ class AccSalesTypes(models.Model):
 
 
 class AccGoddown(models.Model):
-    goddownid = models.CharField(max_length=10, primary_key=True)
-    name = models.CharField(max_length=30)
-    client_id = models.CharField(max_length=50)
+    goddownid = models.CharField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=200)
+    client_id = models.CharField(max_length=100)
 
-    def __str__(self):
-        return self.name
+    class Meta:
+        db_table = 'acc_goddown'
+        managed = True
+
 
 
 class AccGoddownStock(models.Model):
-    goddownid = models.CharField(max_length=10)
-    product = models.CharField(max_length=30)
-    quantity = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
-    barcode = models.CharField(max_length=30, null=True, blank=True)
-    client_id = models.CharField(max_length=50)
+    id = models.AutoField(primary_key=True)
+    goddownid = models.CharField(max_length=50)
+    product = models.CharField(max_length=200)
+    quantity = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True)
+    barcode = models.CharField(max_length=200, null=True, blank=True)
+    client_id = models.CharField(max_length=100)
 
-    def __str__(self):
-        return f"{self.goddownid} - {self.product}"
+    class Meta:
+        db_table = 'acc_goddownstock'
+        managed = True
+
 
