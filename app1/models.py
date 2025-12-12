@@ -227,24 +227,24 @@ class SalesMonthwise(models.Model):
 
     
 class AccProduct(models.Model):
+    id = models.AutoField(primary_key=True)
     code = models.CharField(max_length=30)
     name = models.CharField(max_length=200, blank=True, null=True)
     taxcode = models.CharField(max_length=5, blank=True, null=True)
-    product = models.CharField(max_length=30, blank=True, null=True)
-    brand = models.CharField(max_length=30, blank=True, null=True)
-    unit = models.CharField(max_length=10, blank=True, null=True)
-    defected = models.CharField(max_length=1, blank=True, null=True)
-    text6 = models.CharField(max_length=40, blank=True, null=True)
-    settings = models.CharField(max_length(300), blank=True, null=True)
+    product = models.CharField(max_length=200, blank=True, null=True)
+    brand = models.CharField(max_length=200, blank=True, null=True)
+    unit = models.CharField(max_length=50, blank=True, null=True)
+    defected = models.CharField(max_length=10, blank=True, null=True)
+    text6 = models.CharField(max_length=200, blank=True, null=True)
+    settings = models.CharField(max_length=200, blank=True, null=True)
+    catagory = models.CharField(max_length=200, blank=True, null=True)
+    company = models.CharField(max_length=200, blank=True, null=True)
     client_id = models.CharField(max_length=100)
-    catagory = models.CharField(max_length=20, blank=True, null=True)
-    company = models.CharField(max_length=30, blank=True, null=True)
 
     class Meta:
         db_table = 'acc_product'
         managed = True
         unique_together = ('code', 'client_id')
-
 
 
 
