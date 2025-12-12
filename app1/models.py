@@ -347,5 +347,8 @@ class AccDepartments(models.Model):
     department = models.CharField(max_length=30)
     client_id = models.CharField(max_length=100)
 
+    class Meta:
+        db_table = "acc_departments"   # <-- IMPORTANT: link Django to real table name
+
     def __str__(self):
         return self.department
