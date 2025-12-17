@@ -315,50 +315,75 @@ class GetAccInvmastAPI(APIView):
 
 class UploadAccTtServicemasterAPI(APIView):
     def post(self, request):
+        """
+        Upload acc_tt_servicemaster data with enhanced error handling
+        """
         try:
             data = request.data
             client_id = request.query_params.get('client_id')
-
+            
+            # Validation
             if not client_id:
+                logger.error("Missing client_id in request")
                 return Response({"error": "Missing client_id"}, status=400)
-
+            
             if not isinstance(data, list):
+                logger.error(f"Expected list but got {type(data)}")
                 return Response({"error": "Expected list"}, status=400)
-
-            # 🔥 ALWAYS CLEAR OLD DATA FIRST
-            AccTtServicemaster.objects.filter(client_id=client_id).delete()
-
-            # ✅ IF NO NEW DATA → TABLE STAYS EMPTY
+            
             if len(data) == 0:
-                return Response(
-                    {"message": "Old data cleared. No new data received."},
-                    status=200
-                )
-
+                logger.warning("Empty data array received")
+                return Response({"message": "No data to upload"}, status=200)
+            
+            # Log first record for debugging
+            logger.info(f"Received {len(data)} records. First record: {data[0] if data else 'None'}")
+            
+            # Delete existing records
+            deleted_count = AccTtServicemaster.objects.filter(client_id=client_id).delete()[0]
+            logger.info(f"Deleted {deleted_count} existing records for client {client_id}")
+            
+            # Insert new records
             created_count = 0
-            for row in data:
-                slno = row.get('slno')
-                if slno is None:
+            for idx, row in enumerate(data):
+                try:
+                    # Validate required fields
+                    if 'slno' not in row:
+                        logger.error(f"Record {idx}: Missing 'slno' field. Data: {row}")
+                        continue
+                    
+                    # Convert slno to integer if it's not already
+                    slno_value = int(float(row['slno'])) if row['slno'] is not None else None
+                    
+                    if slno_value is None:
+                        logger.error(f"Record {idx}: slno is None. Data: {row}")
+                        continue
+                    
+                    AccTtServicemaster.objects.create(
+                        slno=slno_value,
+                        type=row.get('type'),
+                        code=row.get('code'),
+                        name=row.get('name'),
+                        client_id=client_id
+                    )
+                    created_count += 1
+                    
+                except Exception as row_error:
+                    logger.error(f"Error processing record {idx}: {str(row_error)}. Data: {row}")
+                    logger.error(traceback.format_exc())
                     continue
-
-                AccTtServicemaster.objects.create(
-                    slno=int(float(slno)),
-                    type=row.get('type'),
-                    code=row.get('code'),
-                    name=row.get('name'),
-                    client_id=client_id
-                )
-                created_count += 1
-
-            return Response(
-                {"message": f"{created_count} acc_tt_servicemaster rows synced"},
-                status=201
-            )
-
+            
+            logger.info(f"Successfully created {created_count} records")
+            return Response({
+                "message": f"{created_count} acc_tt_servicemaster rows uploaded successfully",
+                "created": created_count,
+                "total_received": len(data)
+            }, status=201)
+            
         except Exception as e:
-            logger.error(f"UploadAccTtServicemasterAPI error: {e}\n{traceback.format_exc()}")
-            return Response({"error": str(e)}, status=500)
-
+            error_msg = f"Critical error in UploadAccTtServicemasterAPI: {str(e)}"
+            logger.error(error_msg)
+            logger.error(traceback.format_exc())
+            return Response({"error": error_msg}, status=500)
 
 
 class GetAccTtServicemasterAPI(APIView):
@@ -404,54 +429,55 @@ class UploadAccProductAPI(APIView):
     def post(self, request):
         data = request.data
         client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
 
         if not client_id:
-            return Response({"error": "Missing client_id"}, status=400)
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
 
         if not isinstance(data, list):
-            return Response({"error": "Expected list"}, status=400)
+            return Response({"error": "Expected a list of product items."}, status=400)
 
         try:
-            # 🔥 CLEAR OLD DATA ALWAYS
-            AccProduct.objects.filter(client_id=client_id).delete()
-
-            # ✅ EMPTY DB → EMPTY SERVER
-            if len(data) == 0:
-                return Response(
-                    {"message": "Old product data cleared. No new data received."},
-                    status=200
-                )
+            # Delete old data only if append=false
+            if not append:
+                deleted_count = AccProduct.objects.filter(client_id=client_id).delete()[0]
+                logger.info(f"Deleted {deleted_count} old product rows for client {client_id}")
 
             created_count = 0
+
             for item in data:
-                if not item.get('code'):
+                code = item.get('code')
+                if not code:
                     continue
 
-                AccProduct.objects.create(
-                    code=item.get('code'),
-                    name=item.get('name'),
-                    taxcode=item.get('taxcode'),
-                    product=item.get('product'),
-                    brand=item.get('brand'),
-                    unit=item.get('unit'),
-                    defected=item.get('defected'),
-                    text6=item.get('text6'),
-                    settings=item.get('settings'),
-                    catagory=item.get('catagory'),
-                    company=item.get('company'),
-                    client_id=client_id
+                AccProduct.objects.update_or_create(
+                    code=code,
+                    client_id=client_id,
+                    defaults={
+                        'name': item.get('name'),
+                        'taxcode': item.get('taxcode'),
+                        'product': item.get('product'),
+                        'brand': item.get('brand'),
+                        'unit': item.get('unit'),
+                        'defected': item.get('defected'),
+                        'text6': item.get('text6'),
+                        'settings': item.get('settings'),
+                        'catagory': item.get('catagory'),
+                        'company': item.get('company'),
+                    }
                 )
                 created_count += 1
 
+            action = "appended" if append else "uploaded (old data cleared)"
+
             return Response(
-                {"message": f"{created_count} products synced"},
+                {"message": f"{created_count} products {action} for client_id {client_id}."},
                 status=201
             )
 
         except Exception as e:
-            logger.error(f"UploadAccProductAPI error: {e}\n{traceback.format_exc()}")
+            logger.error(f"Error in UploadAccProductAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
-
 
 
 
@@ -488,30 +514,25 @@ class UploadAccProductBatchAPI(APIView):
     def post(self, request):
         data = request.data
         client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
 
         if not client_id:
-            return Response({"error": "Missing client_id"}, status=400)
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
 
         if not isinstance(data, list):
-            return Response({"error": "Expected list"}, status=400)
+            return Response({"error": "Expected a list of product batch items."}, status=400)
 
         try:
-            # 🔥 CLEAR OLD DATA
-            AccProductBatch.objects.filter(client_id=client_id).delete()
-
-            if len(data) == 0:
-                return Response(
-                    {"message": "Old product batch data cleared. No new data received."},
-                    status=200
-                )
+            if not append:
+                AccProductBatch.objects.filter(client_id=client_id).delete()
 
             created_count = 0
             for item in data:
                 if not item.get('productcode'):
                     continue
-
+                
                 AccProductBatch.objects.create(
-                    productcode=item.get('productcode'),
+                    productcode=item['productcode'],
                     salesprice=item.get('salesprice'),
                     secondprice=item.get('secondprice'),
                     thirdprice=item.get('thirdprice'),
@@ -529,14 +550,14 @@ class UploadAccProductBatchAPI(APIView):
                 )
                 created_count += 1
 
-            return Response(
-                {"message": f"{created_count} product batches synced"},
-                status=201
-            )
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({
+                "message": f"{created_count} product batches {action} for client_id {client_id}."
+            }, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadAccProductBatchAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
-
 
 
 class GetAccProductBatchAPI(APIView):
@@ -624,22 +645,17 @@ class UploadAccProductPhotoAPI(APIView):
     def post(self, request):
         data = request.data
         client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
 
         if not client_id:
-            return Response({"error": "Missing client_id"}, status=400)
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
 
         if not isinstance(data, list):
-            return Response({"error": "Expected list"}, status=400)
+            return Response({"error": "Expected a list of product photo items."}, status=400)
 
         try:
-            # 🔥 CLEAR OLD DATA
-            AccProductPhoto.objects.filter(client_id=client_id).delete()
-
-            if len(data) == 0:
-                return Response(
-                    {"message": "Old product photos cleared. No new data received."},
-                    status=200
-                )
+            if not append:
+                AccProductPhoto.objects.filter(client_id=client_id).delete()
 
             created_count = 0
             for item in data:
@@ -650,14 +666,30 @@ class UploadAccProductPhotoAPI(APIView):
                 )
                 created_count += 1
 
-            return Response(
-                {"message": f"{created_count} product photos synced"},
-                status=201
-            )
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({
+                "message": f"{created_count} product photos {action} for client_id {client_id}."
+            }, status=201)
 
         except Exception as e:
+            logger.error(f"Error in UploadAccProductPhotoAPI: {str(e)}\n{traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
 
+
+class GetAccProductPhotoAPI(APIView):
+    def get(self, request):
+        client_id = request.query_params.get('client_id')
+
+        if not client_id:
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
+
+        photos = AccProductPhoto.objects.filter(client_id=client_id)
+        data = [{
+            "code": ph.code,
+            "url": ph.url,
+        } for ph in photos]
+
+        return Response({"count": len(data), "product_photos": data}, status=200)
 
 
 
