@@ -31,8 +31,16 @@ class MiselSerializer(serializers.ModelSerializer):
 class AccMasterSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccMaster
-        fields = ['code', 'name', 'super_code', 'opening_balance', 'debit', 'credit',
-                  'place', 'phone2', 'openingdepartment', 'area', 'client_id']
+        fields = [
+            'code', 'name', 'super_code',
+            'opening_balance', 'debit', 'credit',
+
+            # ADD THESE 👇
+            'address', 'city', 'phone', 'gstin', 'remarkcolumntitle',
+
+            'place', 'phone2', 'openingdepartment', 'area',
+            'client_id'
+        ]
 
 
 class AccLedgersSerializer(serializers.ModelSerializer):
