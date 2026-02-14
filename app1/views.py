@@ -514,47 +514,50 @@ class UploadAccProductBatchAPI(APIView):
     def post(self, request):
         data = request.data
         client_id = request.query_params.get('client_id')
+        append = request.query_params.get('append', 'false').lower() == 'true'
 
         if not client_id:
-            return Response({"error": "Missing client_id"}, status=400)
+            return Response({"error": "Missing client_id in query parameters."}, status=400)
 
         if not isinstance(data, list):
-            return Response({"error": "Expected list"}, status=400)
+            return Response({"error": "Expected a list of product batch items."}, status=400)
 
-        # 🔥 CLEAR ONLY ON FIRST CALL
-        if request.headers.get("X-FULL-SYNC") == "true":
-            AccProductBatch.objects.filter(client_id=client_id).delete()
+        try:
+            if not append:
+                AccProductBatch.objects.filter(client_id=client_id).delete()
 
-        created_count = 0
+            created_count = 0
+            for item in data:
+                if not item.get('productcode'):
+                    continue
+                
+                AccProductBatch.objects.create(
+                    productcode=item['productcode'],
+                    salesprice=item.get('salesprice'),
+                    secondprice=item.get('secondprice'),
+                    thirdprice=item.get('thirdprice'),
+                    fourthprice=item.get('fourthprice'),
+                    nlc1=item.get('nlc1'),
+                    quantity=item.get('quantity'),
+                    barcode=item.get('barcode'),
+                    bmrp=item.get('bmrp'),
+                    cost=item.get('cost'),
+                    expirydate=item.get('expirydate'),
+                    modified=item.get('modified'),
+                    modifiedtime=item.get('modifiedtime'),
+                    settings=item.get('settings'),
+                    client_id=client_id
+                )
+                created_count += 1
 
-        for item in data:
-            if not item.get('productcode'):
-                continue
+            action = "appended" if append else "uploaded (old data cleared)"
+            return Response({
+                "message": f"{created_count} product batches {action} for client_id {client_id}."
+            }, status=201)
 
-            AccProductBatch.objects.create(
-                productcode=item['productcode'],
-                salesprice=item.get('salesprice'),
-                secondprice=item.get('secondprice'),
-                thirdprice=item.get('thirdprice'),
-                fourthprice=item.get('fourthprice'),
-                nlc1=item.get('nlc1'),
-                quantity=item.get('quantity'),
-                barcode=item.get('barcode'),
-                bmrp=item.get('bmrp'),
-                cost=item.get('cost'),
-                expirydate=item.get('expirydate'),
-                modified=item.get('modified'),
-                modifiedtime=item.get('modifiedtime'),
-                settings=item.get('settings'),
-                client_id=client_id
-            )
-            created_count += 1
-
-        return Response(
-            {"inserted": created_count},
-            status=201
-        )
-
+        except Exception as e:
+            logger.error(f"Error in UploadAccProductBatchAPI: {str(e)}\n{traceback.format_exc()}")
+            return Response({"error": str(e)}, status=500)
 
 
 class GetAccProductBatchAPI(APIView):
