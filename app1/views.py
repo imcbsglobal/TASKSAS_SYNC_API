@@ -514,23 +514,31 @@ class UploadAccProductBatchAPI(APIView):
     def post(self, request):
         data = request.data
         client_id = request.query_params.get('client_id')
-        append = request.query_params.get('append', 'false').lower() == 'true'
+
+        # 🔥 IMPORTANT FIX: productbatch should NEVER append
+        append = False   # ⛔ ignore append=true from sync tool
 
         if not client_id:
-            return Response({"error": "Missing client_id in query parameters."}, status=400)
+            return Response(
+                {"error": "Missing client_id in query parameters."},
+                status=400
+            )
 
         if not isinstance(data, list):
-            return Response({"error": "Expected a list of product batch items."}, status=400)
+            return Response(
+                {"error": "Expected a list of product batch items."},
+                status=400
+            )
 
         try:
-            if not append:
-                AccProductBatch.objects.filter(client_id=client_id).delete()
+            # 🔥 ALWAYS CLEAR OLD DATA
+            AccProductBatch.objects.filter(client_id=client_id).delete()
 
             created_count = 0
             for item in data:
                 if not item.get('productcode'):
                     continue
-                
+
                 AccProductBatch.objects.create(
                     productcode=item['productcode'],
                     salesprice=item.get('salesprice'),
@@ -550,14 +558,22 @@ class UploadAccProductBatchAPI(APIView):
                 )
                 created_count += 1
 
-            action = "appended" if append else "uploaded (old data cleared)"
-            return Response({
-                "message": f"{created_count} product batches {action} for client_id {client_id}."
-            }, status=201)
+            return Response(
+                {
+                    "message": f"{created_count} product batches uploaded (old data cleared) for client_id {client_id}."
+                },
+                status=201
+            )
 
         except Exception as e:
-            logger.error(f"Error in UploadAccProductBatchAPI: {str(e)}\n{traceback.format_exc()}")
-            return Response({"error": str(e)}, status=500)
+            logger.error(
+                f"Error in UploadAccProductBatchAPI: {str(e)}\n{traceback.format_exc()}"
+            )
+            return Response(
+                {"error": str(e)},
+                status=500
+            )
+
 
 
 class GetAccProductBatchAPI(APIView):
