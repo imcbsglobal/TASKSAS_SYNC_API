@@ -507,18 +507,14 @@ class GetAccProductAPI(APIView):
         return Response({"count": len(data), "products": data}, status=200)
 
 
-
-
 # ============ ACC_PRODUCTBATCH APIs ============
 class UploadAccProductBatchAPI(APIView):
     def post(self, request):
         data = request.data
         client_id = request.query_params.get('client_id')
 
-        # 🔒 IMPORTANT:
-        # ProductBatch must NEVER append
-        # Always clear old data for the same client_id
-        append = False  # ignored intentionally
+        # ✅ OLD LOGIC: append depends on request
+        append = request.query_params.get('append') == 'true'
 
         if not client_id:
             return Response(
@@ -533,14 +529,13 @@ class UploadAccProductBatchAPI(APIView):
             )
 
         try:
-            # 🔥 CONDITION 1:
-            # ALWAYS clear old productbatch data for this client
-            AccProductBatch.objects.filter(client_id=client_id).delete()
+            # ❗ OLD LOGIC:
+            # Clear ONLY when append=false
+            if not append:
+                AccProductBatch.objects.filter(client_id=client_id).delete()
 
             created_count = 0
 
-            # 🔥 CONDITION 2:
-            # Insert ONLY the current sync data
             for item in data:
                 if not item.get('productcode'):
                     continue
@@ -564,12 +559,10 @@ class UploadAccProductBatchAPI(APIView):
                 )
                 created_count += 1
 
+            action = "appended" if append else "uploaded (old data cleared)"
             return Response(
                 {
-                    "message": (
-                        f"{created_count} product batches uploaded "
-                        f"(old data cleared) for client_id {client_id}."
-                    )
+                    "message": f"{created_count} product batches {action} for client_id {client_id}."
                 },
                 status=201
             )
@@ -582,8 +575,6 @@ class UploadAccProductBatchAPI(APIView):
                 {"error": str(e)},
                 status=500
             )
-
-
 
 
 class GetAccProductBatchAPI(APIView):
