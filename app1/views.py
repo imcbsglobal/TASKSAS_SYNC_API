@@ -515,8 +515,10 @@ class UploadAccProductBatchAPI(APIView):
         data = request.data
         client_id = request.query_params.get('client_id')
 
-        # 🔥 IMPORTANT FIX: productbatch should NEVER append
-        append = False   # ⛔ ignore append=true from sync tool
+        # 🔒 IMPORTANT:
+        # ProductBatch must NEVER append
+        # Always clear old data for the same client_id
+        append = False  # ignored intentionally
 
         if not client_id:
             return Response(
@@ -531,10 +533,14 @@ class UploadAccProductBatchAPI(APIView):
             )
 
         try:
-            # 🔥 ALWAYS CLEAR OLD DATA
+            # 🔥 CONDITION 1:
+            # ALWAYS clear old productbatch data for this client
             AccProductBatch.objects.filter(client_id=client_id).delete()
 
             created_count = 0
+
+            # 🔥 CONDITION 2:
+            # Insert ONLY the current sync data
             for item in data:
                 if not item.get('productcode'):
                     continue
@@ -560,7 +566,10 @@ class UploadAccProductBatchAPI(APIView):
 
             return Response(
                 {
-                    "message": f"{created_count} product batches uploaded (old data cleared) for client_id {client_id}."
+                    "message": (
+                        f"{created_count} product batches uploaded "
+                        f"(old data cleared) for client_id {client_id}."
+                    )
                 },
                 status=201
             )
@@ -573,6 +582,7 @@ class UploadAccProductBatchAPI(APIView):
                 {"error": str(e)},
                 status=500
             )
+
 
 
 
