@@ -311,6 +311,7 @@ class AccSalesTypes(models.Model):
     name = models.CharField(max_length=150, blank=True, null=True)
     goddown = models.CharField(max_length=50, blank=True, null=True)
     user = models.CharField(max_length=50, blank=True, null=True)
+    max_billno = models.IntegerField(blank=True, null=True)  # ✅ NEW
     client_id = models.CharField(max_length=100)
 
     class Meta:

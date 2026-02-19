@@ -724,6 +724,7 @@ class UploadAccSalesTypesAPI(APIView):
             return Response({"error": "Expected a list"}, status=400)
 
         try:
+            # Clear old data for this client
             AccSalesTypes.objects.filter(client_id=client_id).delete()
 
             for item in data:
@@ -731,14 +732,21 @@ class UploadAccSalesTypesAPI(APIView):
                     name=item.get('name'),
                     goddown=item.get('goddown'),
                     user=item.get('user'),
+                    max_billno=item.get('max_billno'),  # ✅ NEW
                     client_id=client_id
                 )
 
-            return Response({"message": f"{len(data)} acc_sales_types uploaded"}, status=201)
+            return Response(
+                {"message": f"{len(data)} acc_sales_types uploaded"},
+                status=201
+            )
 
         except Exception as e:
-            logger.error(f"Error in UploadAccSalesTypesAPI: {e}\n{traceback.format_exc()}")
+            logger.error(
+                f"Error in UploadAccSalesTypesAPI: {e}\n{traceback.format_exc()}"
+            )
             return Response({"error": str(e)}, status=500)
+
 
 
 class GetAccSalesTypesAPI(APIView):
@@ -753,10 +761,18 @@ class GetAccSalesTypesAPI(APIView):
         data = [{
             "name": r.name,
             "goddown": r.goddown,
-            "user": r.user
+            "user": r.user,
+            "max_billno": r.max_billno  # ✅ NEW
         } for r in rows]
 
-        return Response({"count": len(data), "acc_sales_types": data}, status=200)
+        return Response(
+            {
+                "count": len(data),
+                "acc_sales_types": data
+            },
+            status=200
+        )
+
 
 
 
