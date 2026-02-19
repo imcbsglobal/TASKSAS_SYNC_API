@@ -732,7 +732,7 @@ class UploadAccSalesTypesAPI(APIView):
                     name=item.get('name'),
                     goddown=item.get('goddown'),
                     user=item.get('user'),
-                    max_billno=item.get('max_billno'),  # ✅ NEW
+                    max_billno=item.get('max_billno'),  # ✅ THIS LINE
                     client_id=client_id
                 )
 
